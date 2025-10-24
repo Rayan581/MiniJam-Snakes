@@ -4,6 +4,7 @@ import random
 import os
 from config import *
 from .grid import Grid
+from .snake import Snake
 
 
 class Game:
@@ -20,7 +21,10 @@ class Game:
         grid_width = grid_size * cell_size + (grid_size - 1) * gap
         grid_height = grid_size * cell_size + (grid_size - 1) * gap
         grid_top_left = ((WIDTH - grid_width) // 2, (HEIGHT - grid_height) // 2)
-        self.grid = Grid(grid_top_left, cell_size, grid_size, grid_size, color=(100, 200, 100), gap=gap)
+        self.grid = Grid(grid_top_left, cell_size, grid_size, grid_size, color=(100, 200, 100), gap=gap)\
+
+        snake_start_pos = (grid_size // 2, grid_size // 2)
+        self.snake = Snake(snake_start_pos, segment_size=cell_size, gap=gap, init_length=5, grid_top_left=grid_top_left)
 
         self.running = True
         self.time = 0
@@ -51,5 +55,6 @@ class Game:
     def draw(self):
         self.screen.fill(DARK_GRAY)
         self.grid.draw(self.screen)
+        self.snake.draw(self.screen)
 
         pygame.display.flip()
