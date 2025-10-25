@@ -1,5 +1,4 @@
 import pygame
-from util import draw_rounded_rect
 
 
 class Grid:
@@ -18,4 +17,4 @@ class Grid:
                 x = x0 + col * (self.cell_size + self.gap)
                 y = y0 + row * (self.cell_size + self.gap)
                 rect = (x, y, self.cell_size, self.cell_size)
-                draw_rounded_rect(surface, rect, self.color, radius=5)
+                pygame.draw.rect(surface, self.color, rect, border_radius=5)

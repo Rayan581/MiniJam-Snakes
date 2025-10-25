@@ -11,6 +11,12 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 DARK_GRAY = (44, 44, 44)
+LIGHT_GRAY = (200, 200, 200)
+CARD_UNSELECTED = (200, 220, 255)
+CARD_SELECTED = (255, 240, 120)
+
+# Font
+MINECRAFT_FONT = "assets/fonts/minecraft.ttf"
 
 # Grid settings
 GRID_SIZE = 20  # Number of cells in grid (width and height)
@@ -26,8 +32,12 @@ SNAKE_GAP = GAP
 SNAKE_MOVE_INTERVAL = 0.2  # seconds between moves
 
 # Player settings
-MAX_HAND_SIZE = 5
+MAX_HAND_SIZE = 10
 
 # Card settings
 CARD_TYPES = ['Move', 'Grow', 'Shrink', 'Double Move', 'Reverse']
 CARD_WEIGHTS = [40, 15, 15, 25, 5]  # Weights for random selection
+CARD_WIDTH = 80
+CARD_HEIGHT = 120
+CARD_GAP = 10
+CARDS_PER_PAGE = 6

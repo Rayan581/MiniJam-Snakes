@@ -1,5 +1,5 @@
 import pygame
-from util import draw_rounded_rect, Direction
+from util import Direction
 from config import *
 
 
@@ -37,7 +37,7 @@ class Snake:
             # pick color (head vs body)
             color = self.head_color if i == 0 else self.body_color
 
-            draw_rounded_rect(surface, rect, color, radius=5)
+            pygame.draw.rect(surface, color, rect, border_radius=5)
 
     def set_direction(self, direction):
         opposites = {

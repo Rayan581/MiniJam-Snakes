@@ -28,6 +28,8 @@ class Game:
         player_two = Player("Player 2", start_pos=player_two_start, grid_top_left=grid_top_left, init_direction=Direction.LEFT)
         self.players = [player_one, player_two]
 
+        self.turn = 0  # Index of current player's turn
+
         self.running = True
         self.time = 0
         self.dt = self.clock.get_time() / 1000
@@ -47,25 +49,16 @@ class Game:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.running = False
-                if event.key == pygame.K_w:
-                    self.players[0].snake.set_direction(Direction.UP)
-                elif event.key == pygame.K_s:
-                    self.players[1].snake.set_direction(Direction.DOWN)
-                elif event.key == pygame.K_a:
-                    self.players[0].snake.set_direction(Direction.LEFT)
-                elif event.key == pygame.K_d:
-                    self.players[1].snake.set_direction(Direction.RIGHT)
+            self.players[self.turn].handle_events(event)
 
     def update(self):
         self.dt = self.clock.get_time() / 1000
         self.time += self.dt
-        for player in self.players:
-            player.update(self.dt)
+        self.players[self.turn].update(self.dt)
 
     def draw(self):
         self.screen.fill(DARK_GRAY)
         self.grid.draw(self.screen)
-        for player in self.players:
-            player.draw(self.screen)
+        self.players[self.turn].draw(self.screen)
 
         pygame.display.flip()

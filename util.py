@@ -2,47 +2,43 @@ import pygame
 from enum import Enum
 
 
-def draw_rounded_rect(surface, rect, color, radius=10, width=0):
+def draw_text(
+    surface: pygame.Surface,
+    text: str,
+    font: pygame.font.Font,
+    color: tuple[int, int, int],
+    center: tuple[int, int],
+    line_spacing: int = 2
+) -> None:
     """
-    Draw a filled rounded rectangle onto `surface`.
+    Draws multiline text on a Pygame surface with proper centering.
 
     Args:
-        surface: pygame.Surface to draw on.
-        rect: (x, y, w, h) or pygame.Rect.
-        color: (R, G, B) or (R, G, B, A).
-        radius: corner radius in pixels (clamped to min(w,h)/2).
+        surface (pygame.Surface): The surface to draw the text on.
+        text (str): The text to render, with '\n' for new lines.
+        font (pygame.font.Font): The font object used to render text.
+        color (tuple[int, int, int]): RGB color of the text.
+        center (tuple[int, int]): (x, y) center position for the whole block.
+        line_spacing (int): Extra vertical space (in pixels) between lines.
     """
-    # Normalize rect
-    if isinstance(rect, pygame.Rect):
-        x, y, w, h = rect.x, rect.y, rect.width, rect.height
-    else:
-        x, y, w, h = rect
+    # Split text into lines
+    lines = text.split("\n")
 
-    # clamp radius
-    radius = int(max(0, min(radius, min(w, h) // 2)))
+    # Calculate total height
+    line_height = font.get_linesize()
+    total_height = len(lines) * line_height + (len(lines) - 1) * line_spacing
 
-    # quick path: if radius is 0, just draw a normal filled rect
-    if radius == 0:
-        pygame.draw.rect(surface, color, (x, y, w, h))
-        return
+    # Starting y coordinate (to vertically center)
+    x, y = center
+    start_y = y - total_height // 2
 
-    # create temporary surface with per-pixel alpha
-    temp = pygame.Surface((w, h), pygame.SRCALPHA)
+    # Draw each line
+    for i, line in enumerate(lines):
+        rendered = font.render(line, True, color)
+        rect = rendered.get_rect(
+            center=(x, start_y + i * (line_height + line_spacing) + line_height // 2))
+        surface.blit(rendered, rect)
 
-    # draw central rectangles (these cover edges so circles fill corners cleanly)
-    pygame.draw.rect(temp, color, (radius, 0, w - 2 *
-                     radius, h))        # horizontal core
-    pygame.draw.rect(temp, color, (0, radius, w, h -
-                     2 * radius))        # vertical core
-
-    # draw corner circles (filled)
-    pygame.draw.circle(temp, color, (radius, radius), radius)
-    pygame.draw.circle(temp, color, (w - radius, radius), radius)
-    pygame.draw.circle(temp, color, (radius, h - radius), radius)
-    pygame.draw.circle(temp, color, (w - radius, h - radius), radius)
-
-    # blit temp onto target surface
-    surface.blit(temp, (x, y))
 
 class Direction(Enum):
     UP = (0, -1)
