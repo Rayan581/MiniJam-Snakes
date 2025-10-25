@@ -43,3 +43,18 @@ class Player:
         for card in self.chosen_cards:
             card.selected = False
             card.draw(surface)
+
+    def undo_move(self):
+        if not self.chosen_cards:
+            return
+
+        print(f"Undoing move for {self.name}")
+        last_card = self.chosen_cards.pop()
+        self.hand.add_card(last_card)
+        self.chosen_cards_draw_pos = (
+            self.chosen_cards_draw_pos[0],
+            self.chosen_cards_draw_pos[1] - CARD_GAP
+        )
+
+    def hand_empty(self):
+        return len(self.hand.cards) == 0

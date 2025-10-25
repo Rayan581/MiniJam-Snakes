@@ -1,6 +1,6 @@
 import pygame
 import time
-
+from util import draw_text
 
 class Button:
     def __init__(self, x, y, width, height, function, *,
@@ -53,9 +53,8 @@ class Button:
                          border_radius=self.border_radius)
 
         # Draw text
-        text_surface = self.font.render(self.text, True, self.text_color)
-        text_rect = text_surface.get_rect(center=self.rect.center)
-        screen.blit(text_surface, text_rect)
+        draw_text(screen, self.text, self.font, self.text_color,
+                  self.rect.center)
 
         # Draw tooltip if hovered
         if self.tooltip_text and self.hovered and not self.disabled:

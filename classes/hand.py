@@ -35,6 +35,12 @@ class Hand:
 
         return hand
 
+    def add_card(self, card):
+        card.rect.x = 100 + (len(self.cards) % CARDS_PER_PAGE) * (CARD_WIDTH + CARD_GAP)
+        card.rect.y = HEIGHT - CARD_HEIGHT - 50
+        card.to_remove = False
+        self.cards.append(card)
+
     def handle_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             pos = pygame.mouse.get_pos()
