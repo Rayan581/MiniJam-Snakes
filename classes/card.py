@@ -9,6 +9,7 @@ class Card:
         self.rect = pygame.Rect(x, y, CARD_WIDTH, CARD_HEIGHT)
         self.text = text
         self.selected = False
+        self.to_remove = False
 
     def __repr__(self):
         return f"Card(text={self.text.replace("\n", " ")}, effect={self.effect}, direction={self.direction}, selected={self.selected})"

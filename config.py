@@ -32,7 +32,7 @@ SNAKE_GAP = GAP
 SNAKE_MOVE_INTERVAL = 0.2  # seconds between moves
 
 # Player settings
-MAX_HAND_SIZE = 10
+MAX_HAND_SIZE = 15
 
 # Card settings
 CARD_TYPES = ['Move', 'Grow', 'Shrink', 'Double Move', 'Reverse']
