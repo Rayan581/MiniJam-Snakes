@@ -4,7 +4,7 @@ from config import *
 
 
 class Snake:
-    def __init__(self, position, head_color=(200, 255, 0), body_color=(200, 200, 0), grid_top_left=(0, 0)):
+    def __init__(self, position, head_color=(200, 255, 0), body_color=(200, 200, 0), grid_top_left=(0, 0), init_direction=Direction.RIGHT):
         self.position = position  # (x, y) tuple
         self.head_color = head_color
         self.body_color = body_color
@@ -12,7 +12,7 @@ class Snake:
         self.gap = SNAKE_GAP
         self.time_since_last_move = 0
 
-        self.direction = Direction.RIGHT
+        self.direction = init_direction
         self.new_direction = [self.direction]
 
         # List of (x, y) tuples for each segment, index in the grid
@@ -21,7 +21,10 @@ class Snake:
 
         # Initialize the snake with a given length
         for i in range(1, SNAKE_INIT_LENGTH):
-            self.segments.append((position[0] - i, position[1]))
+            dx, dy = self.direction.value
+            new_segment = (self.segments[i - 1][0] - dx,
+                           self.segments[i - 1][1] - dy)
+            self.segments.append(new_segment)
 
     def draw(self, surface):
         start_x, start_y = self.grid_top_left
