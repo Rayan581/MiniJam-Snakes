@@ -5,6 +5,7 @@ import os
 from config import *
 from .grid import Grid
 from .snake import Snake
+from util import Direction
 
 
 class Game:
@@ -15,16 +16,13 @@ class Game:
         self.clock = pygame.time.Clock()
 
         # Make the grid in the center of the window
-        grid_size = 20
-        cell_size = 25
-        gap = 2
-        grid_width = grid_size * cell_size + (grid_size - 1) * gap
-        grid_height = grid_size * cell_size + (grid_size - 1) * gap
+        grid_width = GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * GAP
+        grid_height = GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * GAP
         grid_top_left = ((WIDTH - grid_width) // 2, (HEIGHT - grid_height) // 2)
-        self.grid = Grid(grid_top_left, cell_size, grid_size, grid_size, color=(100, 200, 100), gap=gap)\
+        self.grid = Grid(grid_top_left, CELL_SIZE, GRID_SIZE, GRID_SIZE, color=(100, 200, 100), gap=GAP)\
 
-        snake_start_pos = (grid_size // 2, grid_size // 2)
-        self.snake = Snake(snake_start_pos, segment_size=cell_size, gap=gap, init_length=5, grid_top_left=grid_top_left)
+        snake_start_pos = (GRID_SIZE // 2, GRID_SIZE // 2)
+        self.snake = Snake(snake_start_pos, grid_top_left=grid_top_left)
 
         self.running = True
         self.time = 0
@@ -45,12 +43,19 @@ class Game:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.running = False
-                if event.key == pygame.K_s:
-                    pass
+                if event.key == pygame.K_w:
+                    self.snake.set_direction(Direction.UP)
+                elif event.key == pygame.K_s:
+                    self.snake.set_direction(Direction.DOWN)
+                elif event.key == pygame.K_a:
+                    self.snake.set_direction(Direction.LEFT)
+                elif event.key == pygame.K_d:
+                    self.snake.set_direction(Direction.RIGHT)
 
     def update(self):
         self.dt = self.clock.get_time() / 1000
         self.time += self.dt
+        self.snake.update(self.dt)
 
     def draw(self):
         self.screen.fill(DARK_GRAY)
