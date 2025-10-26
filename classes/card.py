@@ -34,9 +34,6 @@ class Card:
     def execute(self, snake=None):
         """
         Executes the card's effect.
-        Returns:
-            'win', 'lose', 'draw' — if a result happens
-            None — if the game continues
         """
         if self.effect == "Move":
             if self.direction:
@@ -54,3 +51,5 @@ class Card:
         elif self.effect == "Reverse":
             snake.reverse()
             snake.move()
+        elif self.effect == "Skip":
+            pass

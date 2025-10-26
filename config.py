@@ -20,6 +20,11 @@ FOREST_GREEN = (0, 150, 0)
 CRIMSON_RED = (200, 50, 50)
 LIGHT_CORAL = (255, 100, 100)
 DARK_RED = (150, 0, 0)
+BRIGHT_ORANGE = (255, 120, 0)
+WARM_GOLDEN = (255, 180, 80)
+BOLD_COBALT = (0, 100, 255)
+LIGHT_SKY_BLUE = (100, 180, 255)
+GRASSY_GREEN = (100, 200, 100)
 
 # Font
 MINECRAFT_FONT = "assets/fonts/minecraft.ttf"
@@ -33,13 +38,14 @@ GAP = 2         # Gap between cells in pixels
 SNAKE_INIT_LENGTH = 5
 SNAKE_SEGMENT_SIZE = CELL_SIZE
 SNAKE_GAP = GAP
+INTERPOLATION_SPEED = 10.0
 
 # Player settings
 MAX_HAND_SIZE = 15
 
 # Card settings
-CARD_TYPES = ['Move', 'Grow', 'Shrink', 'Double Move', 'Reverse']
-CARD_WEIGHTS = [40, 15, 15, 25, 5]  # Weights for random selection
+CARD_TYPES = ['Move', 'Grow', 'Shrink', 'Double Move', 'Reverse', 'Skip']
+CARD_WEIGHTS = [40, 15, 15, 20, 5, 5]  # Weights for random selection
 CARD_WIDTH = 80
 CARD_HEIGHT = 120
 CARD_GAP = 10

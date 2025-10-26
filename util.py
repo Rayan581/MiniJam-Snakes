@@ -40,6 +40,32 @@ def draw_text(
         surface.blit(rendered, rect)
 
 
+def draw_dashed_line(surface, start, end, color, dash_length=10):
+    """Draw a dashed line between two points"""
+    import math
+
+    x1, y1 = start
+    x2, y2 = end
+
+    dx = x2 - x1
+    dy = y2 - y1
+    distance = math.sqrt(dx**2 + dy**2)
+
+    if distance == 0:
+        return
+
+    dashes = int(distance / dash_length)
+
+    for i in range(0, dashes, 2):  # Every other dash
+        start_ratio = i / dashes
+        end_ratio = min((i + 1) / dashes, 1)
+
+        dash_start = (x1 + dx * start_ratio, y1 + dy * start_ratio)
+        dash_end = (x1 + dx * end_ratio, y1 + dy * end_ratio)
+
+        pygame.draw.line(surface, color, dash_start, dash_end, 2)
+
+
 class Direction(Enum):
     UP = (0, -1)
     DOWN = (0, 1)

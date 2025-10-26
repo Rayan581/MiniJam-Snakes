@@ -4,7 +4,7 @@ from config import *
 
 
 class Snake:
-    def __init__(self, position, head_color=(200, 255, 0), body_color=(200, 200, 0), grid_top_left=(0, 0), init_direction=Direction.RIGHT):
+    def __init__(self, position, head_color, body_color, grid_top_left=(0, 0), init_direction=Direction.RIGHT):
         self.position = position  # (x, y) tuple
         self.head_color = head_color
         self.body_color = body_color
@@ -25,18 +25,87 @@ class Snake:
                            self.segments[i - 1][1] - dy)
             self.segments.append(new_segment)
 
-    def draw(self, surface):
+        # For smooth interpolation
+        self.visual_segments = []  # (x, y) in pixels, not grid coords
+        self.target_segments = []   # Target pixel positions
+        self.interpolation_speed = INTERPOLATION_SPEED  # Higher = faster interpolation
+        self._init_visual_positions()
+
+    def _init_visual_positions(self):
+        """Initialize visual positions to match current grid positions"""
         start_x, start_y = self.grid_top_left
-        for i, (gx, gy) in enumerate(self.segments):
-            # convert grid coords to pixel coords
+        self.visual_segments = []
+        self.target_segments = []
+
+        for gx, gy in self.segments:
             x = start_x + gx * (self.segment_size + self.gap)
             y = start_y + gy * (self.segment_size + self.gap)
+            self.visual_segments.append([x, y])
+            self.target_segments.append([x, y])
+
+    def _update_target_positions(self):
+        """Update target positions based on grid positions"""
+        start_x, start_y = self.grid_top_left
+        self.target_segments = []
+
+        for gx, gy in self.segments:
+            x = start_x + gx * (self.segment_size + self.gap)
+            y = start_y + gy * (self.segment_size + self.gap)
+            self.target_segments.append([x, y])
+
+    def update_interpolation(self, dt):
+        """Smoothly interpolate visual positions towards targets"""
+        # Ensure we have the right number of visual segments
+        while len(self.visual_segments) < len(self.segments):
+            # Add new segment at the tail position
+            if self.visual_segments:
+                self.visual_segments.append(list(self.visual_segments[-1]))
+            else:
+                self._init_visual_positions()
+                return
+
+        while len(self.visual_segments) > len(self.segments):
+            self.visual_segments.pop()
+
+        # Interpolate each segment
+        for i in range(len(self.visual_segments)):
+            if i < len(self.target_segments):
+                target_x, target_y = self.target_segments[i]
+                current_x, current_y = self.visual_segments[i]
+
+                # Lerp towards target
+                lerp_factor = min(1.0, self.interpolation_speed * dt)
+                new_x = current_x + (target_x - current_x) * lerp_factor
+                new_y = current_y + (target_y - current_y) * lerp_factor
+
+                self.visual_segments[i] = [new_x, new_y]
+
+    def draw(self, surface, use_interpolation=True):
+        """Draw snake with optional smooth interpolation"""
+        if use_interpolation and self.visual_segments:
+            positions = self.visual_segments
+        else:
+            # Fallback to grid positions
+            start_x, start_y = self.grid_top_left
+            positions = []
+            for gx, gy in self.segments:
+                x = start_x + gx * (self.segment_size + self.gap)
+                y = start_y + gy * (self.segment_size + self.gap)
+                positions.append([x, y])
+
+        for i, (x, y) in enumerate(positions):
             rect = (x, y, self.segment_size, self.segment_size)
-
-            # pick color (head vs body)
             color = self.head_color if i == 0 else self.body_color
-
             pygame.draw.rect(surface, color, rect, border_radius=5)
+
+            # Add highlight to head
+            if i == 0:
+                highlight_rect = (
+                    x + 2, y + 2, self.segment_size - 4, self.segment_size - 4)
+                highlight_color = tuple(min(255, c + 40)
+                                        for c in self.head_color)
+                pygame.draw.rect(surface, highlight_color,
+                                 highlight_rect, border_radius=4)
 
     def turn(self, turn_dir):
         # Only 'left' or 'right' are valid
@@ -71,6 +140,9 @@ class Snake:
         head_x = head_x % grid_width
         head_y = head_y % grid_height
         self.segments[0] = (head_x, head_y)
+
+        # Update target positions for interpolation
+        self._update_target_positions()
 
     def grow(self):
         tail = self.segments[-1]

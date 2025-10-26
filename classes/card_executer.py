@@ -11,17 +11,13 @@ class CardExecuter:
 
     def update(self, snake):
         if self.finished:
-            return None
+            return False
 
         if self.current_index < len(self.chosen_cards):
             current_card = self.chosen_cards[self.current_index]
 
             # Execute the current card
-            result = current_card.execute(snake)
-
-            if result in ("win", "lose", "draw"):
-                self.finished = True
-                return result
+            current_card.execute(snake)
 
             self.current_index += 1
 
@@ -30,6 +26,6 @@ class CardExecuter:
             self.round += 1
             if self.round > self.max_rounds:
                 self.finished = True
-                return "draw"
+                return True
 
-        return None
+        return False

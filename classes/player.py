@@ -1,28 +1,33 @@
 from .snake import Snake
 from .hand import Hand
-from util import Direction
+from util import Direction, draw_dashed_line
 from config import *
 from .card_executer import CardExecuter
+import pygame
 
 
 class Player:
-    def __init__(self, name, start_pos=(0, 0), grid_top_left=(0, 0), init_direction=Direction.RIGHT):
+    def __init__(self, name, start_pos=(0, 0), grid_top_left=(0, 0), init_direction=Direction.RIGHT, sound_manager=None):
         self.name = name
+        head_color = BRIGHT_ORANGE if name == "Player 1" else BOLD_COBALT
+        body_color = WARM_GOLDEN if name == "Player 1" else LIGHT_SKY_BLUE
         self.snake = Snake(start_pos, grid_top_left=grid_top_left,
-                           init_direction=init_direction)
-        self.hand = Hand()
+                           init_direction=init_direction, head_color=head_color, body_color=body_color)
+        self.hand = Hand(sound_manager=sound_manager)
         self.chosen_cards = []
 
         self.chosen_cards_draw_pos = self._calculate_chosen_cards_pos(
             grid_top_left)
         self.confirmed = False
         self.card_exec = None
+        self.state = None
 
     def update(self):
         if self.confirmed:
             if self.card_exec is None:
                 self.card_exec = CardExecuter(self.chosen_cards)
             self.run_simulation()
+            return
 
         chosen_card = self.hand.update(
             chosen_card_target_pos=self.chosen_cards_draw_pos)
@@ -42,9 +47,15 @@ class Player:
         self._draw_chosen_cards(surface)
 
     def _draw_chosen_cards(self, surface):
-        for card in self.chosen_cards:
-            card.selected = False
-            card.draw(surface)
+        if not self.confirmed:
+            for card in self.chosen_cards:
+                card.selected = False
+                card.draw(surface)
+        else:
+            current_idx = self.card_exec.current_index
+            current_card = self.chosen_cards[current_idx - 1]
+            current_card.rect.y = HEIGHT // 2
+            current_card.draw(surface)
 
     def undo_move(self):
         if not self.chosen_cards:
@@ -72,4 +83,7 @@ class Player:
         )
 
     def run_simulation(self):
-        self.card_exec.update(self.snake)
+        rounds_end = self.card_exec.update(self.snake)
+        if rounds_end:
+            self.state = "round_end"
+            self.card_exec.round = 3
