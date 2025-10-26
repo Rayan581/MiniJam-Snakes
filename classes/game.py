@@ -16,50 +16,63 @@ class Game:
     def __init__(self, sound_manager, game_settings):
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-        pygame.display.set_caption("Game Template")
+        pygame.display.set_caption("Snake Card Battle")
         self.clock = pygame.time.Clock()
+
         # Initialize sound manager
         self.sound_manager = sound_manager
-        self.game_settings = game_settings
 
-        # Apply settings
-        global MAX_ROUNDS, SNAKE_MOVE_INTERVAL, MAX_HAND_SIZE, GRID_SIZE
-        MAX_ROUNDS = game_settings['max_rounds']
-        SNAKE_MOVE_INTERVAL = game_settings['snake_speed']
-        MAX_HAND_SIZE = game_settings['hand_size']
-        GRID_SIZE = game_settings['grid_size']
+        # Store settings instance (not dict)
+        self.settings = game_settings
+
+        # Validate settings before use
+        self.settings.validate()
 
         # Make the grid in the center of the window
-        grid_width = GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * GAP
-        grid_height = GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * GAP
+        grid_width = self.settings.grid_size * \
+            CELL_SIZE + (self.settings.grid_size - 1) * GAP
+        grid_height = self.settings.grid_size * \
+            CELL_SIZE + (self.settings.grid_size - 1) * GAP
         grid_top_left = ((WIDTH - grid_width) // 2,
                          (HEIGHT - grid_height) // 2)
-        self.grid = Grid(grid_top_left, CELL_SIZE, GRID_SIZE,
-                         GRID_SIZE, color=GRASSY_GREEN, gap=GAP)
+        self.grid = Grid(grid_top_left, CELL_SIZE, self.settings.grid_size,
+                         self.settings.grid_size, color=GRASSY_GREEN, gap=GAP)
 
         # Start planning music
         self.sound_manager.play_music('planning', loop=True)
 
-        player_one_start = (SNAKE_INIT_LENGTH, 0)  # Top-left corner
-        player_one = Player("Player 1", start_pos=player_one_start,
-                            grid_top_left=grid_top_left, init_direction=Direction.RIGHT, sound_manager=self.sound_manager)
-        player_two_start = (GRID_SIZE - SNAKE_INIT_LENGTH - 1,
-                            GRID_SIZE - 1)  # Bottom-right corner
-        player_two = Player("Player 2", start_pos=player_two_start,
-                            grid_top_left=grid_top_left, init_direction=Direction.LEFT, sound_manager=self.sound_manager)
+        player_one_start = (SNAKE_INIT_LENGTH, 0)
+        player_one = Player(
+            "Player 1",
+            start_pos=player_one_start,
+            grid_top_left=grid_top_left,
+            init_direction=Direction.RIGHT,
+            sound_manager=self.sound_manager,
+            max_hand_size=self.settings.hand_size,
+            grid_size=self.settings.grid_size
+        )
+        player_two_start = (self.settings.grid_size - SNAKE_INIT_LENGTH - 1,
+                            self.settings.grid_size - 1)
+        player_two = Player(
+            "Player 2",
+            start_pos=player_two_start,
+            grid_top_left=grid_top_left,
+            init_direction=Direction.LEFT,
+            sound_manager=self.sound_manager,
+            max_hand_size=self.settings.hand_size,
+            grid_size=self.settings.grid_size
+        )
 
         self.players = [player_one, player_two]
-        self.turn = 0  # Index of current player's turn
+        self.turn = 0
         self.run_simulation = False
 
-        # Add these new attributes
         self.particle_system = ParticleSystem()
         self.celebration = None
         self.win_animation_started = False
         self.win_screen_timer = 0
         self.show_win_screen = False
 
-        # Win screen buttons (created when needed)
         self.replay_button = None
         self.menu_button = None
 
@@ -98,9 +111,8 @@ class Game:
         self.return_to_menu = False
         self.time = 0
         self.dt = self.clock.get_time() / 1000
-        self.winner = None  # "one", "two", "draw"
+        self.winner = None
 
-        # Update button sounds
         self.confirm_button.hover_sound = None
         self.confirm_button.click_sound = None
         self.undo_button.hover_sound = None
@@ -133,15 +145,12 @@ class Game:
             self.undo_button.update(events)
             self.confirm_button.update(events)
 
-            # Manual button sound handling
             if self.undo_button.hovered and not self.undo_button.was_hovered:
                 self.sound_manager.play_sound('button_hover')
             if self.confirm_button.hovered and not self.confirm_button.was_hovered:
                 self.sound_manager.play_sound('button_hover')
 
-        # Update win screen buttons
         if self.show_win_screen and self.replay_button:
-            # Track hover state for sounds
             replay_was_hovered = self.replay_button.hovered
             menu_was_hovered = self.menu_button.hovered
 
@@ -149,7 +158,6 @@ class Game:
             if self.menu_button:
                 self.menu_button.update(events)
 
-            # Play hover sounds
             if self.replay_button and self.replay_button.hovered and not replay_was_hovered:
                 self.sound_manager.play_sound('button_hover')
             if self.menu_button and self.menu_button.hovered and not menu_was_hovered:
@@ -161,37 +169,31 @@ class Game:
 
         self.particle_system.update(self.dt)
 
-        # Update snake interpolation (always, for smooth movement)
         for player in self.players:
             player.snake.update_interpolation(self.dt)
 
         if not self.run_simulation and all(p.confirmed for p in self.players):
             self.run_simulation = True
-            # Switch to simulation music
             self.sound_manager.play_music('simulation', loop=True, fade_ms=500)
 
         if self.winner in ("one", "two", "draw", "round_end") and not self.win_animation_started:
             self.start_win_animation()
 
-        # Update win screen timer
         if self.show_win_screen:
             self.win_screen_timer += self.dt
 
-            # Keep emitting confetti
             if self.win_screen_timer < 3.0 and random.random() < 0.3:
                 x = random.randint(100, WIDTH - 100)
                 self.particle_system.emit_confetti_burst(x, 0, count=5)
 
-            # Update celebration
             if self.celebration:
                 self.celebration.update(self.dt)
 
         if self.run_simulation and not self.winner:
-            if self.time > SNAKE_MOVE_INTERVAL:
+            if self.time > self.settings.snake_speed:
                 for player in self.players:
                     player.update()
 
-                # Play subtle move sound
                 self.sound_manager.play_sound('snake_move')
                 self.winner = "round_end" if any(
                     p.state == "round_end" for p in self.players) else self.winner
@@ -201,7 +203,6 @@ class Game:
         else:
             self.players[self.turn].update()
 
-            # If no cards left in hand, enable confirm button
             if self.players[self.turn].hand_empty():
                 self.confirm_button.disabled = False
             else:
@@ -228,10 +229,8 @@ class Game:
         self.draw_game_state_overlay()
         self.draw_snake_length_indicator()
 
-        # Draw particles
         self.particle_system.draw(self.screen)
 
-        # Draw win screen
         if self.show_win_screen:
             self.draw_win_screen(self.screen)
 
@@ -243,21 +242,17 @@ class Game:
 
     def confirm_selection(self):
         self.sound_manager.play_sound('card_confirm')
-        # Set the confirm flag to True
         self.players[self.turn].confirmed = True
-        # Switch turn to the next player
         self.turn = (self.turn + 1) % len(self.players)
 
     def handle_collisions(self):
-        """Enhanced collision detection with particle effects (no self-collision)"""
+        """Enhanced collision detection with particle effects"""
         snake1 = self.players[0].snake
         snake2 = self.players[1].snake
 
-        # Check head-to-body collisions (only with opponent)
         snake1_head_hit = snake1.segments[0] in snake2.segments
         snake2_head_hit = snake2.segments[0] in snake1.segments
 
-        # Create collision particles
         collision_occurred = False
         collision_positions = []
 
@@ -283,14 +278,12 @@ class Game:
             collision_positions.append(
                 (screen_x, screen_y, BOLD_COBALT, BRIGHT_ORANGE))
 
-        # Emit collision particles
         if collision_occurred:
             self.sound_manager.play_sound('collision')
             for x, y, color1, color2 in collision_positions:
                 self.particle_system.emit_collision_explosion(
                     x, y, color1, color2, count=25)
 
-        # Determine winner based on collisions (no self-collision)
         if snake1_head_hit and snake2_head_hit:
             self.winner = "draw"
             self.players[0].state = "draw"
@@ -314,7 +307,6 @@ class Game:
         self.replay_button = None
         self.menu_button = None
 
-        # Restart planning music
         self.sound_manager.play_music('planning', loop=True, fade_ms=500)
 
     def goto_menu(self):
@@ -334,23 +326,35 @@ class Game:
         self.win_screen_timer = 0
 
         player_one_start = (SNAKE_INIT_LENGTH, 0)
-        player_one = Player("Player 1", start_pos=player_one_start,
-                            grid_top_left=self.grid.top_left, init_direction=Direction.RIGHT, sound_manager=self.sound_manager)
-        player_two_start = (GRID_SIZE - SNAKE_INIT_LENGTH - 1,
-                            GRID_SIZE - 1)
-        player_two = Player("Player 2", start_pos=player_two_start,
-                            grid_top_left=self.grid.top_left, init_direction=Direction.LEFT, sound_manager=self.sound_manager)
+        player_one = Player(
+            "Player 1",
+            start_pos=player_one_start,
+            grid_top_left=self.grid.top_left,
+            init_direction=Direction.RIGHT,
+            sound_manager=self.sound_manager,
+            max_hand_size=self.settings.hand_size,
+            grid_size=self.settings.grid_size
+        )
+        player_two_start = (self.settings.grid_size - SNAKE_INIT_LENGTH - 1,
+                            self.settings.grid_size - 1)
+        player_two = Player(
+            "Player 2",
+            start_pos=player_two_start,
+            grid_top_left=self.grid.top_left,
+            init_direction=Direction.LEFT,
+            sound_manager=self.sound_manager,
+            max_hand_size=self.settings.hand_size,
+            grid_size=self.settings.grid_size
+        )
 
         self.players = [player_one, player_two]
 
     def draw_game_state_overlay(self):
         """Draw turn indicator, round counter, and player status"""
         font_small = pygame.font.Font(MINECRAFT_FONT, 20)
-
         surface = self.screen
 
         if not self.run_simulation:
-            # Show whose turn it is
             turn_text = f"{self.players[self.turn].name}'s Turn"
             if self.turn == 0:
                 draw_text(surface, turn_text, font_small, WHITE,
@@ -359,14 +363,12 @@ class Game:
                 draw_text(surface, turn_text, font_small, WHITE,
                           (WIDTH - 10 - font_small.size(turn_text)[0] // 2, 15))
 
-            # Show cards remaining
             cards_left = len(self.players[self.turn].hand.cards)
-            cards_text = f"Cards: {cards_left}/{MAX_HAND_SIZE}"
+            cards_text = f"Cards: {cards_left}/{self.settings.hand_size}"
             draw_text(surface, cards_text, font_small,
                       LIGHT_GRAY, (WIDTH // 2, 15))
 
         else:
-            # Show round counter during simulation
             if self.players[0].card_exec:
                 current_round = self.players[0].card_exec.round
                 max_rounds = self.players[0].card_exec.max_rounds
@@ -386,25 +388,21 @@ class Game:
                 current_idx = player.card_exec.current_index - 1
                 if current_idx < len(player.chosen_cards):
                     card = player.chosen_cards[current_idx]
-                    # Draw a glowing effect around the card
                     glow_rect = card.rect.inflate(10, 10)
                     glow_color = WARM_GOLDEN if player.name == "Player 1" else LIGHT_SKY_BLUE
-                    pygame.draw.rect(surface, glow_color, glow_rect,
-                                     width=4, border_radius=12)
+                    pygame.draw.rect(surface, glow_color,
+                                     glow_rect, width=4, border_radius=12)
 
     def draw_win_screen(self, surface):
         """Display winner announcement with animations"""
-        # Semi-transparent overlay
         overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 150))
         surface.blit(overlay, (0, 0))
 
-        from util import draw_text
         font_huge = pygame.font.Font(MINECRAFT_FONT, 72)
         font_large = pygame.font.Font(MINECRAFT_FONT, 36)
         font_medium = pygame.font.Font(MINECRAFT_FONT, 24)
 
-        # Determine winner info
         if self.winner == "draw":
             title = "DRAW!"
             subtitle = "Both Snakes Collided"
@@ -413,7 +411,6 @@ class Game:
             title = "DRAW!"
             subtitle = "Rounds end"
             color = LIGHT_GRAY
-
         elif self.winner == "one":
             title = "PLAYER 1 WINS!"
             subtitle = "Orange Snake Victorious!"
@@ -423,20 +420,16 @@ class Game:
             subtitle = "Blue Snake Victorious!"
             color = BOLD_COBALT
 
-        # Animate title (bounce effect)
         bounce = abs(math.sin(self.win_screen_timer * 3)) * 10
         title_y = HEIGHT // 2 - 80 - bounce
 
-        # Draw title with shadow
         draw_text(surface, title, font_huge, (0, 0, 0),
                   (WIDTH // 2 + 3, title_y + 3))
         draw_text(surface, title, font_huge, color, (WIDTH // 2, title_y))
 
-        # Draw subtitle
         draw_text(surface, subtitle, font_large,
                   WHITE, (WIDTH // 2, HEIGHT // 2))
 
-        # Draw stats
         if self.winner in ("one", "two"):
             winner_idx = 0 if self.winner == "one" else 1
             winner_snake = self.players[winner_idx].snake
@@ -444,7 +437,6 @@ class Game:
             draw_text(surface, stats, font_medium, LIGHT_GRAY,
                       (WIDTH // 2, HEIGHT // 2 + 50))
 
-        # Draw buttons
         if self.replay_button and self.menu_button:
             self.replay_button.draw(surface)
             self.menu_button.draw(surface)
@@ -461,11 +453,10 @@ class Game:
             length = len(player.snake.segments)
             text = f"Length: {length}"
 
-            # Position based on player
-            if i == 0:  # Player 1
+            if i == 0:
                 x = 10 + font.size(text)[0] // 2
                 color = BRIGHT_ORANGE
-            else:  # Player 2
+            else:
                 x = WIDTH - 10 - font.size(text)[0] // 2
                 color = BOLD_COBALT
 
@@ -477,7 +468,6 @@ class Game:
         if self.win_animation_started:
             return
 
-        # Play win sound and stop music
         self.sound_manager.play_sound('win')
         self.sound_manager.stop_music(fade_ms=1000)
 
@@ -485,13 +475,11 @@ class Game:
         self.win_screen_timer = 0
         self.show_win_screen = True
 
-        # Create confetti bursts at multiple locations
         for _ in range(5):
             x = random.randint(100, WIDTH - 100)
             y = random.randint(50, 200)
             self.particle_system.emit_confetti_burst(x, y, count=30)
 
-        # Add sparkles around winner
         if self.winner in ("one", "two"):
             winner_idx = 0 if self.winner == "one" else 1
             winner_snake = self.players[winner_idx].snake
@@ -508,7 +496,6 @@ class Game:
                 self.particle_system.emit_sparkles(
                     screen_x, screen_y, color, count=20)
 
-            # Start snake celebration
             self.celebration = SnakeCelebration(
                 winner_snake,
                 winner_snake.grid_top_left,
@@ -516,7 +503,6 @@ class Game:
                 GAP
             )
 
-        # Create buttons
         self.create_win_screen_buttons()
 
     def create_win_screen_buttons(self):
@@ -524,7 +510,7 @@ class Game:
         button_y = HEIGHT // 2 + 120
 
         self.replay_button = Button(
-            x=WIDTH // 2 - 120,
+            x=WIDTH // 2 - 60,
             y=button_y,
             width=120,
             height=50,
@@ -540,8 +526,8 @@ class Game:
         )
 
         self.menu_button = Button(
-            x=WIDTH // 2 + 20,
-            y=button_y,
+            x=WIDTH // 2 - 50,  # Center it
+            y=button_y + 70,     # Put it below replay button
             width=100,
             height=50,
             function=self.goto_menu,

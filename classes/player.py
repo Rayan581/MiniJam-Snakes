@@ -7,17 +7,29 @@ import pygame
 
 
 class Player:
-    def __init__(self, name, start_pos=(0, 0), grid_top_left=(0, 0), init_direction=Direction.RIGHT, sound_manager=None):
+    def __init__(self, name, start_pos=(0, 0), grid_top_left=(0, 0),
+                 init_direction=Direction.RIGHT, sound_manager=None,
+                 max_hand_size=15, grid_size=20):
         self.name = name
+        self.max_hand_size = max_hand_size
+        self.grid_size = grid_size
+
         head_color = BRIGHT_ORANGE if name == "Player 1" else BOLD_COBALT
         body_color = WARM_GOLDEN if name == "Player 1" else LIGHT_SKY_BLUE
-        self.snake = Snake(start_pos, grid_top_left=grid_top_left,
-                           init_direction=init_direction, head_color=head_color, body_color=body_color)
-        self.hand = Hand(sound_manager=sound_manager)
+        self.snake = Snake(
+            start_pos,
+            grid_top_left=grid_top_left,
+            init_direction=init_direction,
+            head_color=head_color,
+            body_color=body_color,
+            grid_size=grid_size
+        )
+        self.hand = Hand(sound_manager=sound_manager,
+                         max_hand_size=max_hand_size)
         self.chosen_cards = []
 
         self.chosen_cards_draw_pos = self._calculate_chosen_cards_pos(
-            grid_top_left)
+            grid_top_left, grid_size)
         self.confirmed = False
         self.card_exec = None
         self.state = None
@@ -72,8 +84,9 @@ class Player:
     def hand_empty(self):
         return len(self.hand.cards) == 0
 
-    def _calculate_chosen_cards_pos(self, grid_top_left):
-        grid_width = GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * GAP
+    def _calculate_chosen_cards_pos(self, grid_top_left, grid_size):
+        """Calculate position for chosen cards display"""
+        grid_width = grid_size * CELL_SIZE + (grid_size - 1) * GAP
 
         return (
             (grid_top_left[0] - CARD_WIDTH) / 2, grid_top_left[1]
@@ -86,4 +99,5 @@ class Player:
         rounds_end = self.card_exec.update(self.snake)
         if rounds_end:
             self.state = "round_end"
-            self.card_exec.round = 3
+            # Use max_rounds from card_exec, not hardcoded value
+            self.card_exec.round = self.card_exec.max_rounds

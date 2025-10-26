@@ -12,17 +12,16 @@ class MainMenu:
         self.screen = screen
         self.sound_manager = sound_manager
         self.running = True
-        self.next_state = None  # 'game', 'settings', or None
+        self.next_state = None
 
-        # Title
         self.title_font = pygame.font.Font(MINECRAFT_FONT, 72)
         self.subtitle_font = pygame.font.Font(MINECRAFT_FONT, 24)
 
-        # Buttons
+        # Button layout - now with 4 buttons
         button_width = 300
         button_height = 60
         button_x = WIDTH // 2 - button_width // 2
-        start_y = HEIGHT // 2 - 50
+        start_y = HEIGHT // 2 - 90  # Adjusted to fit 4 buttons
 
         self.play_button = Button(
             x=button_x, y=start_y, width=button_width, height=button_height,
@@ -36,8 +35,20 @@ class MainMenu:
             text_color=WHITE
         )
 
+        self.tutorial_button = Button(
+            x=button_x, y=start_y + 70, width=button_width, height=button_height,
+            function=self.open_tutorial,
+            text="How to Play",
+            color=(255, 180, 80),  # Orange color
+            hover_color=(255, 200, 100),
+            click_color=(235, 160, 60),
+            font=MINECRAFT_FONT,
+            font_size=32,
+            text_color=WHITE
+        )
+
         self.settings_button = Button(
-            x=button_x, y=start_y + 80, width=button_width, height=button_height,
+            x=button_x, y=start_y + 140, width=button_width, height=button_height,
             function=self.open_settings,
             text="Settings",
             color=(100, 150, 200),
@@ -49,7 +60,7 @@ class MainMenu:
         )
 
         self.quit_button = Button(
-            x=button_x, y=start_y + 160, width=button_width, height=button_height,
+            x=button_x, y=start_y + 210, width=button_width, height=button_height,
             function=self.quit_game,
             text="Quit",
             color=(200, 100, 100),
@@ -60,16 +71,20 @@ class MainMenu:
             text_color=WHITE
         )
 
-        self.buttons = [self.play_button,
+        self.buttons = [self.play_button, self.tutorial_button,
                         self.settings_button, self.quit_button]
 
-        # Background animation
         self.bg_offset = 0
         self.bg_speed = 20
 
     def start_game(self):
         self.sound_manager.play_sound('button_click')
         self.next_state = 'game'
+        self.running = False
+
+    def open_tutorial(self):
+        self.sound_manager.play_sound('button_click')
+        self.next_state = 'tutorial'
         self.running = False
 
     def open_settings(self):
@@ -92,7 +107,6 @@ class MainMenu:
                     self.next_state = 'quit'
                     self.running = False
 
-        # Update buttons
         for button in self.buttons:
             old_hover = button.hovered
             button.update(events)
@@ -105,10 +119,8 @@ class MainMenu:
             self.bg_offset = 0
 
     def draw(self):
-        # Animated background
         self.screen.fill(DARK_GRAY)
 
-        # Draw grid pattern in background
         for x in range(0, WIDTH, 50):
             for y in range(0, HEIGHT, 50):
                 offset_x = int((x + self.bg_offset) % 50)
@@ -118,15 +130,12 @@ class MainMenu:
                 pygame.draw.rect(self.screen, color,
                                  (x - offset_x, y - offset_y, 50, 50))
 
-        # Draw title
         draw_text(self.screen, "SNAKE CARD\nBATTLE", self.title_font,
                   BRIGHT_ORANGE, (WIDTH // 2, 100), line_spacing=10)
 
-        # Draw subtitle
         draw_text(self.screen, "Strategic Turn-Based Snake Combat",
                   self.subtitle_font, LIGHT_GRAY, (WIDTH // 2, 200))
 
-        # Draw buttons
         for button in self.buttons:
             button.draw(self.screen)
 
@@ -157,11 +166,9 @@ class SettingsMenu:
         self.running = True
         self.next_state = None
 
-        # Title
         self.title_font = pygame.font.Font(MINECRAFT_FONT, 48)
         self.label_font = pygame.font.Font(MINECRAFT_FONT, 20)
 
-        # Sliders
         slider_x = 300
         slider_width = 200
         slider_height = 10
@@ -181,27 +188,26 @@ class SettingsMenu:
             ),
             'max_rounds': Slider(
                 slider_x, start_y + spacing * 2, slider_width, slider_height,
-                1, 10, self.game_settings['max_rounds'],
+                1, 10, self.game_settings.max_rounds,
                 label="Max Rounds", font=MINECRAFT_FONT, font_size=20, force_int=True
             ),
             'snake_speed': Slider(
                 slider_x, start_y + spacing * 3, slider_width, slider_height,
-                0.1, 2.0, self.game_settings['snake_speed'],
+                0.1, 2.0, self.game_settings.snake_speed,
                 label="Snake Speed", font=MINECRAFT_FONT, font_size=20
             ),
             'hand_size': Slider(
                 slider_x, start_y + spacing * 4, slider_width, slider_height,
-                5, 20, self.game_settings['hand_size'],
+                5, 20, self.game_settings.hand_size,
                 label="Hand Size", font=MINECRAFT_FONT, font_size=20, force_int=True
             ),
             'grid_size': Slider(
                 slider_x, start_y + spacing * 5, slider_width, slider_height,
-                10, 30, self.game_settings['grid_size'],
+                10, 30, self.game_settings.grid_size,
                 label="Grid Size", font=MINECRAFT_FONT, font_size=20, force_int=True
             ),
         }
 
-        # Buttons
         button_width = 150
         button_height = 50
         button_y = HEIGHT - 100
@@ -242,19 +248,17 @@ class SettingsMenu:
     def apply_settings(self):
         self.sound_manager.play_sound('button_click')
 
-        # Apply audio settings immediately
         self.sound_manager.set_music_volume(self.sliders['music_volume'].value)
         self.sound_manager.set_sfx_volume(self.sliders['sfx_volume'].value)
 
-        # Update game settings
-        self.game_settings['max_rounds'] = int(
-            self.sliders['max_rounds'].value)
-        self.game_settings['snake_speed'] = self.sliders['snake_speed'].value
-        self.game_settings['hand_size'] = int(self.sliders['hand_size'].value)
-        self.game_settings['grid_size'] = int(self.sliders['grid_size'].value)
+        self.game_settings.max_rounds = int(self.sliders['max_rounds'].value)
+        self.game_settings.snake_speed = self.sliders['snake_speed'].value
+        self.game_settings.hand_size = int(self.sliders['hand_size'].value)
+        self.game_settings.grid_size = int(self.sliders['grid_size'].value)
 
-        # Show confirmation
-        print("Settings applied:", self.game_settings)
+        self.game_settings.validate()
+
+        print("Settings applied:", self.game_settings.to_dict())
 
     def handle_events(self, events):
         for event in events:
@@ -265,11 +269,9 @@ class SettingsMenu:
                 if event.key == pygame.K_ESCAPE:
                     self.go_back()
 
-        # Update sliders
         for slider in self.sliders.values():
             slider.update(events)
 
-        # Update buttons
         for button in self.buttons:
             old_hover = button.hovered
             button.update(events)
@@ -282,19 +284,15 @@ class SettingsMenu:
     def draw(self):
         self.screen.fill(DARK_GRAY)
 
-        # Draw title
         draw_text(self.screen, "SETTINGS", self.title_font,
                   LIGHT_GRAY, (WIDTH // 2, 80))
 
-        # Draw sliders
         for slider in self.sliders.values():
             slider.draw(self.screen)
 
-        # Draw buttons
         for button in self.buttons:
             button.draw(self.screen)
 
-        # Draw description text
         desc_text = "Adjust game parameters. Changes apply to new games."
         draw_text(self.screen, desc_text, self.label_font,
                   (150, 150, 150), (WIDTH // 2, HEIGHT - 120))

@@ -5,7 +5,8 @@ import pygame
 
 
 class Hand:
-    def __init__(self, sound_manager=None):
+    def __init__(self, sound_manager=None, max_hand_size=15):
+        self.max_hand_size = max_hand_size
         self.cards = self._generate_random_hand()
         self.current_page = 0
         self.hovered_card = None
@@ -17,7 +18,7 @@ class Hand:
         effects = CARD_TYPES
         weights = CARD_WEIGHTS
 
-        for i in range(MAX_HAND_SIZE):
+        for i in range(self.max_hand_size):
             page = i // CARDS_PER_PAGE
             index_on_page = i % CARDS_PER_PAGE
 

@@ -4,12 +4,14 @@ from config import *
 
 
 class Snake:
-    def __init__(self, position, head_color, body_color, grid_top_left=(0, 0), init_direction=Direction.RIGHT):
+    def __init__(self, position, head_color, body_color, grid_top_left=(0, 0),
+                 init_direction=Direction.RIGHT, grid_size=20):
         self.position = position  # (x, y) tuple
         self.head_color = head_color
         self.body_color = body_color
         self.segment_size = SNAKE_SEGMENT_SIZE
         self.gap = SNAKE_GAP
+        self.grid_size = grid_size
 
         self.direction = init_direction
         self.new_direction = [self.direction]
@@ -28,7 +30,7 @@ class Snake:
         # For smooth interpolation
         self.visual_segments = []  # (x, y) in pixels, not grid coords
         self.target_segments = []   # Target pixel positions
-        self.interpolation_speed = INTERPOLATION_SPEED  # Higher = faster interpolation
+        self.interpolation_speed = INTERPOLATION_SPEED
         self._init_visual_positions()
 
     def _init_visual_positions(self):
@@ -57,7 +59,6 @@ class Snake:
         """Smoothly interpolate visual positions towards targets"""
         # Ensure we have the right number of visual segments
         while len(self.visual_segments) < len(self.segments):
-            # Add new segment at the tail position
             if self.visual_segments:
                 self.visual_segments.append(list(self.visual_segments[-1]))
             else:
@@ -73,7 +74,6 @@ class Snake:
                 target_x, target_y = self.target_segments[i]
                 current_x, current_y = self.visual_segments[i]
 
-                # Lerp towards target
                 lerp_factor = min(1.0, self.interpolation_speed * dt)
                 new_x = current_x + (target_x - current_x) * lerp_factor
                 new_y = current_y + (target_y - current_y) * lerp_factor
@@ -85,7 +85,6 @@ class Snake:
         if use_interpolation and self.visual_segments:
             positions = self.visual_segments
         else:
-            # Fallback to grid positions
             start_x, start_y = self.grid_top_left
             positions = []
             for gx, gy in self.segments:
@@ -95,10 +94,10 @@ class Snake:
 
         for i, (x, y) in enumerate(positions[::-1]):
             rect = (x, y, self.segment_size, self.segment_size)
-            color = self.head_color if i == (len(positions) - 1) else self.body_color
+            color = self.head_color if i == (
+                len(positions) - 1) else self.body_color
             pygame.draw.rect(surface, color, rect, border_radius=5)
 
-            # Add highlight to head
             if i == len(positions) - 1:
                 highlight_rect = (
                     x + 2, y + 2, self.segment_size - 4, self.segment_size - 4)
@@ -108,11 +107,9 @@ class Snake:
                                  highlight_rect, border_radius=4)
 
     def turn(self, turn_dir):
-        # Only 'left' or 'right' are valid
         if turn_dir not in ("left", "right"):
             return
 
-        # Map current direction to new direction after a left or right turn
         turn_map = {
             Direction.UP:    {"left": Direction.LEFT,  "right": Direction.RIGHT},
             Direction.DOWN:  {"left": Direction.RIGHT, "right": Direction.LEFT},
@@ -130,18 +127,14 @@ class Snake:
 
         dx, dy = self.direction.value
         new_head = (self.segments[0][0] + dx, self.segments[0][1] + dy)
-        self.segments = [new_head] + \
-            self.segments[:-1]  # move segments forward
+        self.segments = [new_head] + self.segments[:-1]
 
-        # Teleport snake to opposite side
-        grid_width = GRID_SIZE
-        grid_height = GRID_SIZE
+        # Teleport snake to opposite side - use instance grid_size
         head_x, head_y = self.segments[0]
-        head_x = head_x % grid_width
-        head_y = head_y % grid_height
+        head_x = head_x % self.grid_size
+        head_y = head_y % self.grid_size
         self.segments[0] = (head_x, head_y)
 
-        # Update target positions for interpolation
         self._update_target_positions()
 
     def grow(self):
