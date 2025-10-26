@@ -117,11 +117,7 @@ class Game:
             self.draw()
             self.clock.tick(FPS)
 
-        if self.return_to_menu:
-            self.running = True
-            return 'menu'
-        else:
-            return 'quit'
+        return 'menu' if self.return_to_menu else 'quit'
 
     def handle_events(self):
         events = pygame.event.get()
