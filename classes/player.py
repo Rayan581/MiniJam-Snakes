@@ -2,7 +2,7 @@ from .snake import Snake
 from .hand import Hand
 from util import Direction
 from config import *
-from .button import Button
+from .card_executer import CardExecuter
 
 
 class Player:
@@ -13,17 +13,19 @@ class Player:
         self.hand = Hand()
         self.chosen_cards = []
 
-        grid_width = GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * GAP
-        self.chosen_cards_draw_pos = (
-            (grid_top_left[0] - CARD_WIDTH) / 2, grid_top_left[1]
-        ) if name == "Player 1" else (
-            grid_top_left[0] + grid_width + (
-                WIDTH - (grid_top_left[0] + grid_width) - CARD_WIDTH) / 2, grid_top_left[1]
-        )
+        self.chosen_cards_draw_pos = self._calculate_chosen_cards_pos(
+            grid_top_left)
+        self.confirmed = False
+        self.card_exec = None
 
-    def update(self, time_delta):
-        self.snake.update(time_delta)
-        chosen_card = self.hand.update(chosen_card_target_pos=self.chosen_cards_draw_pos)
+    def update(self):
+        if self.confirmed:
+            if self.card_exec is None:
+                self.card_exec = CardExecuter(self.chosen_cards)
+            self.run_simulation()
+
+        chosen_card = self.hand.update(
+            chosen_card_target_pos=self.chosen_cards_draw_pos)
         if chosen_card:
             self.chosen_cards.append(chosen_card)
             self.chosen_cards_draw_pos = (
@@ -58,3 +60,16 @@ class Player:
 
     def hand_empty(self):
         return len(self.hand.cards) == 0
+
+    def _calculate_chosen_cards_pos(self, grid_top_left):
+        grid_width = GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * GAP
+
+        return (
+            (grid_top_left[0] - CARD_WIDTH) / 2, grid_top_left[1]
+        ) if self.name == "Player 1" else (
+            grid_top_left[0] + grid_width + (
+                WIDTH - (grid_top_left[0] + grid_width) - CARD_WIDTH) / 2, grid_top_left[1]
+        )
+
+    def run_simulation(self):
+        self.card_exec.update(self.snake)

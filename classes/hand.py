@@ -1,5 +1,4 @@
 from .card import Card
-from util import Direction
 from config import *
 import random
 import pygame
@@ -12,7 +11,7 @@ class Hand:
 
     def _generate_random_hand(self):
         hand = []
-        directions = list(Direction)
+        directions = ["right", "left"]
         effects = CARD_TYPES
         weights = CARD_WEIGHTS
 
@@ -27,7 +26,7 @@ class Hand:
             name = f"{effect}"
             if effect == "Move":
                 direction = random.choice(directions)
-                name += "\n" + direction.name
+                name += "\n" + direction
                 card = Card(x, y, name, effect, direction)
             else:
                 card = Card(x, y, name, effect)
@@ -36,7 +35,8 @@ class Hand:
         return hand
 
     def add_card(self, card):
-        card.rect.x = 100 + (len(self.cards) % CARDS_PER_PAGE) * (CARD_WIDTH + CARD_GAP)
+        card.rect.x = 100 + (len(self.cards) %
+                             CARDS_PER_PAGE) * (CARD_WIDTH + CARD_GAP)
         card.rect.y = HEIGHT - CARD_HEIGHT - 50
         card.to_remove = False
         self.cards.append(card)

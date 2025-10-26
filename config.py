@@ -34,9 +34,6 @@ SNAKE_INIT_LENGTH = 5
 SNAKE_SEGMENT_SIZE = CELL_SIZE
 SNAKE_GAP = GAP
 
-# Movement settings
-SNAKE_MOVE_INTERVAL = 0.2  # seconds between moves
-
 # Player settings
 MAX_HAND_SIZE = 15
 
@@ -47,3 +44,7 @@ CARD_WIDTH = 80
 CARD_HEIGHT = 120
 CARD_GAP = 10
 CARDS_PER_PAGE = 6
+
+# Game settings
+MAX_ROUNDS = 3
+SNAKE_MOVE_INTERVAL = 0.5  # seconds between moves

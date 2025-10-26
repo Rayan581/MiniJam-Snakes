@@ -20,15 +20,21 @@ class Game:
         # Make the grid in the center of the window
         grid_width = GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * GAP
         grid_height = GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * GAP
-        grid_top_left = ((WIDTH - grid_width) // 2, (HEIGHT - grid_height) // 2)
+        grid_top_left = ((WIDTH - grid_width) // 2,
+                         (HEIGHT - grid_height) // 2)
         self.grid = Grid(grid_top_left, CELL_SIZE, GRID_SIZE, GRID_SIZE, color=(100, 200, 100), gap=GAP)\
 
-        player_one_start = (SNAKE_INIT_LENGTH, 0) # Top-left corner
-        player_one = Player("Player 1", start_pos=player_one_start, grid_top_left=grid_top_left, init_direction=Direction.RIGHT)
-        player_two_start = (GRID_SIZE - SNAKE_INIT_LENGTH - 1, GRID_SIZE - 1) # Bottom-right corner
-        player_two = Player("Player 2", start_pos=player_two_start, grid_top_left=grid_top_left, init_direction=Direction.LEFT)
+        player_one_start = (SNAKE_INIT_LENGTH, 0)  # Top-left corner
+        player_one = Player("Player 1", start_pos=player_one_start,
+                            grid_top_left=grid_top_left, init_direction=Direction.RIGHT)
+        player_two_start = (GRID_SIZE - SNAKE_INIT_LENGTH - 1,
+                            GRID_SIZE - 1)  # Bottom-right corner
+        player_two = Player("Player 2", start_pos=player_two_start,
+                            grid_top_left=grid_top_left, init_direction=Direction.LEFT)
+
         self.players = [player_one, player_two]
         self.turn = 0  # Index of current player's turn
+        self.run_simulation = False
 
         self.confirm_button = Button(
             x=WIDTH - 100 - 20, y=HEIGHT - 40 - 20, width=100, height=40,
@@ -81,27 +87,45 @@ class Game:
                 if event.key == pygame.K_ESCAPE:
                     self.running = False
             self.players[self.turn].handle_events(event)
-        self.undo_button.update(events)
-        self.confirm_button.update(events)
+
+        if not self.run_simulation:
+            self.undo_button.update(events)
+            self.confirm_button.update(events)
 
     def update(self):
         self.dt = self.clock.get_time() / 1000
         self.time += self.dt
-        self.players[self.turn].update(self.dt)
 
-        # If no cards left in hand, enable confirm button
-        if self.players[self.turn].hand_empty():
-            self.confirm_button.disabled = False
+        if not self.run_simulation and all(p.confirmed for p in self.players):
+            self.run_simulation = True
+
+        if self.run_simulation:
+            if self.time > SNAKE_MOVE_INTERVAL:
+                for player in self.players:
+                    player.update()
+                self.time = 0
         else:
-            self.confirm_button.disabled = True
+            self.players[self.turn].update()
+
+            # If no cards left in hand, enable confirm button
+            if self.players[self.turn].hand_empty():
+                self.confirm_button.disabled = False
+            else:
+                self.confirm_button.disabled = True
 
     def draw(self):
         self.screen.fill(DARK_GRAY)
         self.grid.draw(self.screen)
-        self.players[self.turn].draw(self.screen)
 
-        self.undo_button.draw(self.screen)
-        self.confirm_button.draw(self.screen)
+        if self.run_simulation:
+            for player in self.players:
+                player.draw(self.screen)
+        else:
+            self.players[self.turn].draw(self.screen)
+
+        if not self.run_simulation:
+            self.undo_button.draw(self.screen)
+            self.confirm_button.draw(self.screen)
 
         pygame.display.flip()
 
@@ -109,6 +133,7 @@ class Game:
         self.players[self.turn].undo_move()
 
     def confirm_selection(self):
-        print(f"{self.players[self.turn].name} confirmed their selection.")
+        # Set the confirm flag to True
+        self.players[self.turn].confirmed = True
         # Switch turn to the next player
         self.turn = (self.turn + 1) % len(self.players)

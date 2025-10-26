@@ -2,6 +2,7 @@ import pygame
 from config import *
 from util import draw_text
 
+
 class Card:
     def __init__(self, x, y, text, effect, direction=None):
         self.direction = direction
@@ -17,13 +18,39 @@ class Card:
     def draw(self, surface):
         color = CARD_UNSELECTED if not self.selected else CARD_SELECTED
         pygame.draw.rect(surface, color, self.rect, border_radius=10)
-        pygame.draw.rect(surface, (50, 50, 80), self.rect, width=3, border_radius=10)
+        pygame.draw.rect(surface, (50, 50, 80), self.rect,
+                         width=3, border_radius=10)
 
         font = pygame.font.Font(MINECRAFT_FONT, 14)
-        draw_text(surface, self.text.replace(" ", "\n"), font, BLACK, self.rect.center)
+        draw_text(surface, self.text.replace(" ", "\n"),
+                  font, BLACK, self.rect.center)
 
     def handle_click(self, pos):
         if self.rect.collidepoint(pos):
             self.selected = True
             return True
         return False
+
+    def execute(self, snake=None):
+        """
+        Executes the card's effect.
+        Returns:
+            'win', 'lose', 'draw' — if a result happens
+            None — if the game continues
+        """
+        if self.effect == "Move":
+            if self.direction:
+                snake.turn(self.direction)
+                snake.move()
+        elif self.effect == "Double Move":
+            snake.move()
+            snake.move()
+        elif self.effect == "Grow":
+            snake.grow()
+            snake.move()
+        elif self.effect == "Shrink":
+            snake.shrink()
+            snake.move()
+        elif self.effect == "Reverse":
+            snake.reverse()
+            snake.move()

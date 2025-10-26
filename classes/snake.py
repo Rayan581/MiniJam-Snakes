@@ -10,7 +10,6 @@ class Snake:
         self.body_color = body_color
         self.segment_size = SNAKE_SEGMENT_SIZE
         self.gap = SNAKE_GAP
-        self.time_since_last_move = 0
 
         self.direction = init_direction
         self.new_direction = [self.direction]
@@ -39,25 +38,24 @@ class Snake:
 
             pygame.draw.rect(surface, color, rect, border_radius=5)
 
-    def set_direction(self, direction):
-        opposites = {
-            Direction.UP: Direction.DOWN,
-            Direction.DOWN: Direction.UP,
-            Direction.LEFT: Direction.RIGHT,
-            Direction.RIGHT: Direction.LEFT,
+    def turn(self, turn_dir):
+        # Only 'left' or 'right' are valid
+        if turn_dir not in ("left", "right"):
+            return
+
+        # Map current direction to new direction after a left or right turn
+        turn_map = {
+            Direction.UP:    {"left": Direction.LEFT,  "right": Direction.RIGHT},
+            Direction.DOWN:  {"left": Direction.RIGHT, "right": Direction.LEFT},
+            Direction.LEFT:  {"left": Direction.DOWN,  "right": Direction.UP},
+            Direction.RIGHT: {"left": Direction.UP,    "right": Direction.DOWN},
         }
 
         last_direction = self.new_direction[-1] if self.new_direction else self.direction
-        if direction != opposites[last_direction]:
-            self.new_direction.append(direction)
+        new_dir = turn_map[last_direction][turn_dir]
+        self.new_direction.append(new_dir)
 
-    def update(self, time_delta=0):
-        self.time_since_last_move += time_delta
-
-        # Move the snake in the current direction every 0.2 seconds
-        if self.time_since_last_move < SNAKE_MOVE_INTERVAL:
-            return
-
+    def move(self):
         self.direction = self.new_direction.pop(
             0) if self.new_direction else self.direction
 
@@ -74,4 +72,23 @@ class Snake:
         head_y = head_y % grid_height
         self.segments[0] = (head_x, head_y)
 
-        self.time_since_last_move = 0
+    def grow(self):
+        tail = self.segments[-1]
+        self.segments.append(tail)
+
+    def shrink(self):
+        if len(self.segments) > 2:
+            self.segments.pop()
+
+    def reverse(self):
+        self.segments.reverse()
+
+        opposites = {
+            Direction.UP: Direction.DOWN,
+            Direction.DOWN: Direction.UP,
+            Direction.LEFT: Direction.RIGHT,
+            Direction.RIGHT: Direction.LEFT,
+        }
+
+        self.direction = opposites[self.direction]
+        self.new_direction = [self.direction]
