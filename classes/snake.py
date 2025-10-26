@@ -93,13 +93,13 @@ class Snake:
                 y = start_y + gy * (self.segment_size + self.gap)
                 positions.append([x, y])
 
-        for i, (x, y) in enumerate(positions):
+        for i, (x, y) in enumerate(positions[::-1]):
             rect = (x, y, self.segment_size, self.segment_size)
-            color = self.head_color if i == 0 else self.body_color
+            color = self.head_color if i == (len(positions) - 1) else self.body_color
             pygame.draw.rect(surface, color, rect, border_radius=5)
 
             # Add highlight to head
-            if i == 0:
+            if i == len(positions) - 1:
                 highlight_rect = (
                     x + 2, y + 2, self.segment_size - 4, self.segment_size - 4)
                 highlight_color = tuple(min(255, c + 40)

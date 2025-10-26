@@ -13,11 +13,21 @@ from .particle import ParticleSystem, SnakeCelebration
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, sound_manager, game_settings):
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("Game Template")
         self.clock = pygame.time.Clock()
+        # Initialize sound manager
+        self.sound_manager = sound_manager
+        self.game_settings = game_settings
+
+        # Apply settings
+        global MAX_ROUNDS, SNAKE_MOVE_INTERVAL, MAX_HAND_SIZE, GRID_SIZE
+        MAX_ROUNDS = game_settings['max_rounds']
+        SNAKE_MOVE_INTERVAL = game_settings['snake_speed']
+        MAX_HAND_SIZE = game_settings['hand_size']
+        GRID_SIZE = game_settings['grid_size']
 
         # Make the grid in the center of the window
         grid_width = GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * GAP
@@ -26,9 +36,6 @@ class Game:
                          (HEIGHT - grid_height) // 2)
         self.grid = Grid(grid_top_left, CELL_SIZE, GRID_SIZE,
                          GRID_SIZE, color=GRASSY_GREEN, gap=GAP)
-
-        # Initialize sound manager
-        self.sound_manager = SoundManager()
 
         # Start planning music
         self.sound_manager.play_music('planning', loop=True)
@@ -88,6 +95,7 @@ class Game:
         )
 
         self.running = True
+        self.return_to_menu = False
         self.time = 0
         self.dt = self.clock.get_time() / 1000
         self.winner = None  # "one", "two", "draw"
@@ -98,13 +106,22 @@ class Game:
         self.undo_button.hover_sound = None
         self.undo_button.click_sound = None
 
-    def run(self):
+    def run(self, clock):
+        """Modified run method that returns state"""
+        self.clock = clock
+        self.sound_manager.play_music('planning', loop=True)
+
         while self.running:
             self.handle_events()
             self.update()
             self.draw()
             self.clock.tick(FPS)
-        pygame.quit()
+
+        if self.return_to_menu:
+            self.running = True
+            return 'menu'
+        else:
+            return 'quit'
 
     def handle_events(self):
         events = pygame.event.get()
@@ -137,9 +154,9 @@ class Game:
                 self.menu_button.update(events)
 
             # Play hover sounds
-            if self.replay_button.hovered and not replay_was_hovered:
+            if self.replay_button and self.replay_button.hovered and not replay_was_hovered:
                 self.sound_manager.play_sound('button_hover')
-            if self.menu_button.hovered and not menu_was_hovered:
+            if self.menu_button and self.menu_button.hovered and not menu_was_hovered:
                 self.sound_manager.play_sound('button_hover')
 
     def update(self):
@@ -305,10 +322,10 @@ class Game:
         self.sound_manager.play_music('planning', loop=True, fade_ms=500)
 
     def goto_menu(self):
-        """Go to main menu (placeholder - implement your menu system)"""
-        print("Going to main menu...")
-        self.running = False  # For now, just exit
-        # TODO: Implement proper menu system
+        """Return to main menu"""
+        self.sound_manager.play_sound('button_click')
+        self.return_to_menu = True
+        self.running = False
 
     def reset(self):
         """Enhanced reset that cleans up win screen state"""
@@ -532,7 +549,7 @@ class Game:
             width=100,
             height=50,
             function=self.goto_menu,
-            text="Exit",
+            text="Menu",
             color=BOLD_COBALT,
             hover_color=LIGHT_SKY_BLUE,
             click_color=(0, 50, 200),

@@ -56,7 +56,6 @@ class Hand:
             # select a card with mouse
             for i, card in enumerate(self.cards[start_index:end_index]):
                 if card.handle_click(pos):
-                    print(f"Card chosen: {card.text.replace("\n", " ")}")
                     card.to_remove = True
                     # Play card selection sound
                     if self.sound_manager:

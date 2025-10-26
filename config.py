@@ -1,7 +1,7 @@
 # Configuration file for MiniJam-Snakes game
 # Window settings
-WIDTH = 800
-HEIGHT = 600
+WIDTH = 1200
+HEIGHT = 800
 FPS = 60
 
 # Colors
